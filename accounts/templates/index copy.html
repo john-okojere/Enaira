@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body{
+            margin: 20px !important;
+        }
+        /* CSS comes here */
+        #video{
+            border: 1px solid black;
+            width: 320px;
+            height: 240px;
+        }
+
+        #photo{
+            border: 1px solid black;
+            width: 320px;
+            height: 240px;
+        }
+
+        #canvas{
+            display: none;
+        }
+        .camera {
+            width: 340px;
+            display: inline-block;
+        }
+
+        .output {
+            width: 340px;
+            display: inline-block;
+        }
+
+        #startbutton { 
+            display: block;
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            bottom: 36px;
+            padding: 5px;
+            background-color: #6a67ce;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 1.0);
+            cursor: pointer;
+        }
+        
+        .contentarea {
+            font-size: 16px;
+            font-family: Arial;
+            text-align: center;
+        }
+    </style>
+    <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}">
+    
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="contentarea mx-area">
+        <h1>
+            Face Login Django
+        </h1>
+        
+        <div class="camera">
+            <video id="video"></video>
+        </div>
+
+        <div><button id="startbutton"> Take photo</button></div>
+
+        <canvas id="canvas"></canvas>
+        <div class="output">
+            <img alt="The screen capture will appear in this box" id="photo">
+        </div>
+
+
+    </div>
+
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="row mx-auto">
+            <div class="col-md-6 mx-auto">
+                <br><br>
+                <input class="form-control" placeholder="Enter Email" id="email" type="email" name="email" >
+            </div>
+        </div>
+        <br>
+        <div class="row mx-auto">
+            <div class="col-md-6 mx-auto">
+                <input class="form-control" placeholder="Enter Password" id="email" type="password" name="password" >
+                <textarea name="image" style="display: none;" id="s" cols="30" rows="10"></textarea>
+            </div>
+        </div>
+        <br>
+        <div class="text-center">
+
+            <button class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+    <script>
+        // Js comes here
+        var base64_image = null;
+        (function () {
+            
+            var width = 320;
+            var height = 0;
+
+            var streaming = false;
+
+            var video = null;
+            var canvas = null;
+            var photo = null;
+            var startbutton = null;
+
+            function startup() {
+                video = document.getElementById('video');
+                canvas = document.getElementById('canvas');
+                photo = document.getElementById('photo');
+                startbutton = document.getElementById('startbutton');
+
+                navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    })
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(function (err) {
+                        console.log("An error occurred: " + err);
+                    });
+                
+                video.addEventListener('canplay', function (ev){
+                    if (!streaming){
+                        height = video.videoHeight / (video.videoWidth / width);
+
+                        if (isNaN(height)) {
+                            height = width / (4 / 3);
+                        }
+
+                        video.setAttribute('width', width);
+                        video.setAttribute('height', height);
+                        canvas.setAttribute('width', width);
+                        canvas.setAttribute('height', height);
+                        streaming = true;
+                    }
+                }, false);
+
+                startbutton.addEventListener('click', function (ev) {
+                    takepicture();
+                    ev.preventDefault()
+                }, false);
+
+                clearphoto()
+            }
+
+            function dataURLtoFile(dataurl, filename) {
+ 
+                var arr = dataurl.split(','),
+                    mime = arr[0].match(/:(.*?);/)[1],
+                    bstr = atob(arr[1]), 
+                    n = bstr.length, 
+                    u8arr = new Uint8Array(n);
+                    
+                while(n--){
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                
+                return new File([u8arr], filename, {type:mime});
+                }
+
+            function clearphoto() {
+                var context = canvas.getContext('2d');
+                context.filStyle = "#AAA";
+                context.fillRect(0,0, canvas.width, canvas.height);
+
+                var data = canvas.toDataURL('image/jpg');
+                photo.setAttribute('src', data);
+                console.log(data);
+            }
+
+            function takepicture() {
+                var context = canvas.getContext('2d');
+                if (width  && height){
+                    canvas.width = width;
+                    canvas.height = height;
+                    context.drawImage(video, 0, 0, width, height);
+
+                    var data = canvas.toDataURL('image/jpg');
+                    photo.setAttribute('src', data);
+                    document.getElementById('s').value = canvas.toDataURL('image/jpg')
+
+                    base64_image = canvas.toDataURL()
+                    console.log(canvas.toDataURL())
+                } else {
+                    clearphoto();
+                }
+            }
+
+            window.addEventListener('load', startup, false);
+        })();
+    </script>
+</body>
+</html >

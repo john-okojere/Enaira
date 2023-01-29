@@ -1,0 +1,8 @@
+makemigrations
+
+Create minimum of two user to test 
+Add image in admin to users
+
+package:
+    Pilow
+    face_recognition
